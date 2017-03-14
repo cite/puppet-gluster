@@ -11,6 +11,7 @@
 # use_exported_resources: whether or not to export this server's gluster::server and
 #                         collect other gluster::server resources
 # version: the version to install
+# identity: how to identify the local node in a multi-homed setup
 # volumes: optional list of volumes (and their properties) to create
 #
 # === Example
@@ -51,6 +52,7 @@ class gluster  (
   $server_package         = $::gluster::params::server_package,
   $use_exported_resources = $::gluster::params::export_resources,
   $version                = $::gluster::params::version,
+  $identity               = $::gluster::params::identity,
   $volumes                = undef,
 ) inherits ::gluster::params {
 
@@ -71,8 +73,9 @@ class gluster  (
 
     if $use_exported_resources {
       # first we export this server's instance
-      @@gluster::peer { $::fqdn:
-        pool => $pool,
+      @@gluster::peer { $identity:
+        pool     => $pool,
+        identity => $identity,
       }
 
       # then we collect all instances
@@ -81,7 +84,9 @@ class gluster  (
 
     if $volumes {
       validate_hash( $volumes )
-      create_resources( ::gluster::volume, $volumes )
+      create_resources( ::gluster::volume, $volumes, {
+        identity => $identity,
+      } )
     }
   }
 }

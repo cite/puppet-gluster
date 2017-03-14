@@ -4,7 +4,7 @@
 # a Gluster Trusted Storage Pool. Each server should also collect all
 # such exported resources for local realization.
 #
-# If the title of the exported resource is NOT the FQDN of the host
+# If the title of the exported resource is NOT our own identity
 # on which the resource is being realized, then try to initiate a
 # Gluster peering relationship.
 #
@@ -42,7 +42,8 @@
 #       peering attempt only resolves a cosmetic issue, not a functional one.
 #
 define gluster::peer (
-  $pool = 'default'
+  $pool     = 'default',
+  $identity = $gluster::params::identity,
 ) {
 
   # we can't do much without the Gluster binary
@@ -51,8 +52,7 @@ define gluster::peer (
   if getvar('::gluster_binary') {
     # we can't join to ourselves, so it only makes sense to operate
     # on other gluster servers in the same pool
-    if $title != $::fqdn {
-
+    if $title != $::gluster::identity
       # and we don't want to attach a server that is already a member
       # of the current pool
       if getvar('::gluster_peer_list') {
@@ -67,8 +67,8 @@ define gluster::peer (
       }
       if !$already_in_pool {
         exec { "gluster peer probe ${title}":
-            command => "${::gluster_binary} peer probe ${title}",
-          }
+          command => "${::gluster_binary} peer probe ${title}",
+        }
       }
     }
   }
